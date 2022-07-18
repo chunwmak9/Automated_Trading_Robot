@@ -616,6 +616,8 @@ if __name__ == "__main__":
             st.write("Other")
             option_tradetable = st.checkbox("Enable Trade Table")
             option_analytics =st.checkbox("Turn Analytics On")
+            option_metrics =st.checkbox("Show Metrics")
+
         
 
         
@@ -698,7 +700,16 @@ if __name__ == "__main__":
                       
                     st.pyplot(fig)
                     if option_tradetable:
-                        st.table(data[::-1])
+                        tradetable_expander = st.expander(label='Trade Table')
+                        with tradetable_expander:
+                            st.table(data[::-1])
+                    if option_metrics:
+                        metrics_expander = st.expander(label="Metrics")
+                        with metrics_expander:
+                            try:
+                                st.metric(label="RSI", value=round(data["RSI"][-1],1), delta=round((data["RSI"][-1] - data["RSI"][-2]),1),delta_color="inverse")
+                            except:
+                                st.metric(label="RSI", value=0, delta=0,delta_color="inverse")
 
                     #st.line_chart(data[["BOLL_UB","BOLL_LB","SMA"]])
 
@@ -710,6 +721,7 @@ if __name__ == "__main__":
                             st.bar_chart(data["DIFF"])
                             st.bar_chart(data["Volume"])
                             st.line_chart(data["RSI"])
+                    
                     #time.sleep(1)
                     
     real_time_window("NNDM")
