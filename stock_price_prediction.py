@@ -207,6 +207,30 @@ class Finance_Algorithms:
             SMA.append(sma)
         return Upper_Band,Lower_Bnad,SMA,STD
     
+    """
+    Fibonacci Retraction
+    Default days: 5
+    Input: days data 
+    Output: prices for 23.6% ,38.2%,61.8%,78.6%
+    """
+    def Fibonacci_Retraction(self,data,days=5):
+        fib = [0,0.236,0.382,0.5,0.618,0.786]
+        res = []
+        Price_MAX = data["High"].max()
+        Price_MIN = data["High"].min()
+        Diff = Price_MAX - Price_MIN 
+        #Diff: Range between Max and Min
+
+        level0 = Price_MAX - fib[0]*Diff
+        level1 = Price_MAX - fib[1]*Diff
+        level2 = Price_MAX - fib[2]*Diff
+        level3 = Price_MAX - fib[3]*Diff
+        level4 = Price_MAX - fib[4]*Diff
+        level5 = Price_MAX - fib[5]*Diff
+        res = [level0,level1,level2,level3,level4,level5]
+        return res
+
+
 
 
     def Technical_Automated(self,data):
@@ -432,27 +456,7 @@ class DataPreprocessor(Finance_Algorithms):
                 data = data.to_numpy()   
                 data = data_rescale.fit_transform(data.reshape(-1,1))
         return data
-    """
-    Default days: 5
-    Input: days data 
-    Output: prices for 23.6% ,38.2%,61.8%,78.6%
-    """
-    def Fibonacci_Retraction(self,data,days=5):
-        fib = [0,0.236,0.382,0.5,0.618,0.786]
-        res = []
-        Price_MAX = data["High"].max()
-        Price_MIN = data["High"].min()
-        Diff = Price_MAX - Price_MIN 
-        #Diff: Range between Max and Min
-
-        level0 = Price_MAX - fib[0]*Diff
-        level1 = Price_MAX - fib[1]*Diff
-        level2 = Price_MAX - fib[2]*Diff
-        level3 = Price_MAX - fib[3]*Diff
-        level4 = Price_MAX - fib[4]*Diff
-        level5 = Price_MAX - fib[5]*Diff
-        res = [level0,level1,level2,level3,level4,level5]
-        return res
+    
 
 
 
@@ -597,7 +601,7 @@ if __name__ == "__main__":
         if st.button('Select'):
             stock = option
             fib_data = sg.get_rt_data(stock,5)
-            fib = data_preprocessor.Fibonacci_Retraction(fib_data)
+            fib = algo.Fibonacci_Retraction(fib_data)
             print("Fibonanci Retraction:{}".format(str(fib)))
 
         
@@ -639,7 +643,7 @@ if __name__ == "__main__":
                     #Fibonanci_Retraction
                     if option_fibonacci == True:
                         colors = ["r","g","b","r","g","b"]
-                        fib = data_preprocessor.Fibonacci_Retraction(fib_data)
+                        fib = algo.Fibonacci_Retraction(fib_data)
                         print("Fibonanci Retraction:{}".format(str(fib)))
                         fib_ratios = [0,0.236,0.382,0.5,0.618,0.786]
                         for i in range(len(fib)):
