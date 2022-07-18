@@ -89,9 +89,9 @@ class StockGetter(object):
         self.data = yf.download(self.token,self.start_date,self.end_date,interval = "1d")
         #1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo and 3mo (m refers to minute, h refers to hour, d refers to day, wk refers to week and mo refers to month)
         return self.data
-    def get_rt_data(self,stock):
+    def get_rt_data(self,stock,days=1):
         self.ticker_yahoo = yf.Ticker(stock)
-        self.data = self.ticker_yahoo.history(period = "1d", interval="1m")
+        self.data = self.ticker_yahoo.history(period = "{}d".format(str(days)), interval="1m")
         return self.data
     def get_all_tokens(self):
         #Stock_data

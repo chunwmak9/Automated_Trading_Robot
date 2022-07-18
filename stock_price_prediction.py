@@ -432,6 +432,29 @@ class DataPreprocessor(Finance_Algorithms):
                 data = data.to_numpy()   
                 data = data_rescale.fit_transform(data.reshape(-1,1))
         return data
+    """
+    Default days: 5
+    Input: days data 
+    Output: prices for 23.6% ,38.2%,61.8%,78.6%
+    """
+    def Fibonacci_Retraction(self,data,days=5):
+        fib = [0,0.236,0.382,0.5,0.618,0.786]
+        res = []
+        Price_MAX = data["High"].max()
+        Price_MIN = data["High"].min()
+        Diff = Price_MAX - Price_MIN 
+        #Diff: Range between Max and Min
+
+        level0 = Price_MAX - fib[0]*Diff
+        level1 = Price_MAX - fib[1]*Diff
+        level2 = Price_MAX - fib[2]*Diff
+        level3 = Price_MAX - fib[3]*Diff
+        level4 = Price_MAX - fib[4]*Diff
+        level5 = Price_MAX - fib[5]*Diff
+        res = [level0,level1,level2,level3,level4,level5]
+        return res
+
+
 
 
 
@@ -533,7 +556,7 @@ if __name__ == "__main__":
     #     except:
     #         pass
 
-
+    
     ####Signal Stock
     sg = sd.StockGetter()
     
@@ -561,12 +584,40 @@ if __name__ == "__main__":
         data = data_preprocessor.get_format_data(data)
         algo = Finance_Algorithms()
         all_tokens = sg.get_all_tokens()
+
+        fib_data = sg.get_rt_data(stock,5)
+        
         option = st.selectbox(
                         'Select a Stock:',
                         tuple(all_tokens))
+       
+
+
+        
         if st.button('Select'):
-            
             stock = option
+            fib_data = sg.get_rt_data(stock,5)
+            fib = data_preprocessor.Fibonacci_Retraction(fib_data)
+            print("Fibonanci Retraction:{}".format(str(fib)))
+
+        
+        with st.sidebar:
+            st.write("Trade Automation")
+            option_tradebot = st.checkbox("Turn TradeBot On")
+            
+            st.write("Analytic Tools")
+            option_fibonacci = st.checkbox("Fibonacci Retraction")
+            option_boll = st.checkbox("Bollinger Bands")
+
+            st.write("Other")
+            option_tradetable = st.checkbox("Enable Trade Table")
+            option_analytics =st.checkbox("Turn Analytics On")
+        
+
+        
+            
+    
+
 
         with st.empty():
             while True:
@@ -577,58 +628,85 @@ if __name__ == "__main__":
                     data = sg.get_rt_data(stock)
                     #data = sg.get_data('2018-2-24',now,"NNDM")
                     data = data_preprocessor.get_format_data(data)
-                    time.sleep(1)
+                    #time.sleep(1)
                     #print(data["Close"].min())
                     
                     data,ENTRY,EXIT = algo.Technical_Automated(data)
                     #data
+                    
+                    
+
+                    #Fibonanci_Retraction
+                    if option_fibonacci == True:
+                        colors = ["r","g","b","r","g","b"]
+                        fib = data_preprocessor.Fibonacci_Retraction(fib_data)
+                        print("Fibonanci Retraction:{}".format(str(fib)))
+                        fib_ratios = [0,0.236,0.382,0.5,0.618,0.786]
+                        for i in range(len(fib)):
+                            plt.annotate("Level{} ({}%) : {}".format(i,round(fib_ratios[i]*100,3),round(fib[i],3)),(len(data.index)//50,fib[i]))
+                            if i+1 <= len(fib) -1:
+                                plt.axhspan(fib[i],fib[i+1],0,len(data.index),color=colors[i],alpha=0.1)
+                                print(fib)
+                            else:
+                                plt.axhspan(fib[i],data["Close"].min(),0,len(data.index),color=colors[i],alpha=0.1)
+                                print(fib)
+                    
+
+
+
                     l1= ax.plot(range(len(data.index)),data["Close"])
 
                     #l2= ax.plot(range(len(data.index)),data["EMA_12"])
                     
                     #l3 = ax.plot(range(len(data.index)),data["EMA_26"])
-                    l4 = ax.plot(range(len(data.index)),data["BOLL_UB"])
-                    l5 = ax.plot(range(len(data.index)),data["BOLL_LB"])
-                    l6 = ax.plot(range(len(data.index)),data["SMA"])
+                    if option_boll:
+                        l4 = ax.plot(range(len(data.index)),data["BOLL_UB"])
+                        l5 = ax.plot(range(len(data.index)),data["BOLL_LB"])
+                        l6 = ax.plot(range(len(data.index)),data["SMA"])
 
                     #labels = ['Close',"BOLL_UB","BOLL_LB","SMA"] #,"EMA 12","EMA 26"
                     
                     #ax.legend(labels, loc ='lower left') 
-                    ax.scatter(range(len(data.index)),data["Auto_Entry"],color="green",marker='*',s=30)
-                    ax.scatter(range(len(data.index)),data["Auto_Exit"],color="red",marker='*',s=30)
-                    entry_price = []
-                    exit_price = []
-                    gains = []
-                    for e in range(len(ENTRY)):
+                    if option_tradebot:
+                        ax.scatter(range(len(data.index)),data["Auto_Entry"],color="green",marker='*',s=30)
+                        ax.scatter(range(len(data.index)),data["Auto_Exit"],color="red",marker='*',s=30)
+                        entry_price = []
+                        exit_price = []
+                        gains = []
+                        for e in range(len(ENTRY)):
 
-                        entry_price.append(round(ENTRY[e][1],3))
-                        ax.annotate("Buy at {}".format(round(ENTRY[e][1],3)), (ENTRY[e][0], ENTRY[e][1]))
-                    for ex in range(len(EXIT)):
-                        exit_price.append(round(EXIT[ex][1],3))
-                        ax.annotate("Sell at {}".format(round(EXIT[ex][1],3)) ,(EXIT[ex][0], EXIT[ex][1]))
-                    if len(entry_price) == len(exit_price): 
-                        for e,ex in zip(entry_price,exit_price):
-                            gains.append(((ex-e)/e)*100)
-                    else:
-                        if len(entry_price) == 0:
-                            gains.append(0)
-                        else:
-                            for e,ex in zip(entry_price[:len(entry_price)-1],exit_price):
+                            entry_price.append(round(ENTRY[e][1],3))
+                            ax.annotate("Buy at {}".format(round(ENTRY[e][1],3)), (ENTRY[e][0], ENTRY[e][1]))
+                        for ex in range(len(EXIT)):
+                            exit_price.append(round(EXIT[ex][1],3))
+                            ax.annotate("Sell at {}".format(round(EXIT[ex][1],3)) ,(EXIT[ex][0], EXIT[ex][1]))
+                        if len(entry_price) == len(exit_price): 
+                            for e,ex in zip(entry_price,exit_price):
                                 gains.append(((ex-e)/e)*100)
-                    st.write("Total Gains: {}%".format(str(sum(gains))))
+                        else:
+                            if len(entry_price) == 0:
+                                gains.append(0)
+                            else:
+                                for e,ex in zip(entry_price[:len(entry_price)-1],exit_price):
+                                    gains.append(((ex-e)/e)*100)
+                        st.write("Total Gains: {}%".format(str(sum(gains))))
 
-                    
+                      
                     st.pyplot(fig)
-
+                    if option_tradetable:
+                        st.table(data[::-1])
 
                     #st.line_chart(data[["BOLL_UB","BOLL_LB","SMA"]])
 
                     #st.line_chart(data[["EMA_12","Close","EMA_26"]])
-                    st.line_chart(data[["MACD","Signal"]])
-                    st.bar_chart(data["DIFF"])
-                    st.bar_chart(data["Volume"])
-                    st.line_chart(data["RSI"])
-                    time.sleep(1)
+                    if option_analytics:
+                        analytics_expander = st.expander(label='Analytics')
+                        with analytics_expander:
+                            st.line_chart(data[["MACD","Signal"]])
+                            st.bar_chart(data["DIFF"])
+                            st.bar_chart(data["Volume"])
+                            st.line_chart(data["RSI"])
+                    #time.sleep(1)
                     
     real_time_window("NNDM")
     
